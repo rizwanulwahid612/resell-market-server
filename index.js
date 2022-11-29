@@ -110,18 +110,7 @@ async function run() {
 //advitice
         app.post('/advitiseproduct/:id',async(req,res)=>{
             const advitiseproduct=req.body;
-            // const query={
-            //     _id:advitiseproduct.location
-            // }
-            // console.log(query)
-            // const alreadyAdvitised = await advitageCollection.find(query).toArray();
-            // if (alreadyAdvitised.length) {
-            //     const message = `you have already advitiseproduct on ${advitiseproduct.addedProduct.name}`
-            //     return res.send({ acknowledged: false, message })
-            // }
-
-
-
+           
             const result= await advitageCollection.insertOne(advitiseproduct);
             res.send(result);
         })
@@ -182,36 +171,6 @@ async function run() {
             res.send(result);
         })
        
-        // app.get('/myordersbookings',verifyJWT,async(req,res)=>{
-        //     const email =req.query.email;
-        //     const decodedEmail = req.decoded.email;
-
-        //     if(email !== decodedEmail){
-        //         return res.status(403).send({ message: 'forbidden access' })
-        //     }
-        //     const query= {BuyerEmail:email};
-        //     const result=await bookingCollection.find(query).toArray();
-        //     res.send(result);
-        // });
-    
-// test booking X
-// app.get('/addproducts',verifyJWT, async(req,res)=>{
-//     const email =req.query.email;
-   
-//     // console.log('token',req.headers.authorization)
-//     const decodedEmail = req.decoded.email;
-
-//     if(email !== decodedEmail){
-//         return res.status(403).send({ message: 'forbidden access' })
-//     }
-//     const query= { selleremail:email };
-   
-//     const result=await productsCollection.find(query).toArray();
-//     res.send(result);
-// });
-
-
-// 
      
         //get buyer info ,BuyerEmail:1,Image:1,Location:1,BookingDate:1,product:1
         app.get('/buyersinfo',async(req,res)=>{
