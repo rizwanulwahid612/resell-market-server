@@ -42,17 +42,17 @@ async function run() {
         const bookingCollection = client.db('resellmarket').collection('bookings');
         const advitageCollection = client.db('resellmarket').collection('advitise');
         const paymentCollection = client.db('resellmarket').collection('payments');
-         
+        const repotedproductCollection= client.db('resellmarket').collection('repotedproduct');
 
-        const verifyAdmin = async( req,res,next)=>{
-            const decodedEmail = req.decoded.email;
-            const query = {email: decodedEmail};
-            const user = await sellersCollection.findOne(query);
-            if (user?.role !== 'admin') {
-                return res.status(403).send({ message: 'forbidden access' })
-            }
-            next()
-        }
+        // const verifyAdmin = async( req,res,next)=>{
+        //     const decodedEmail = req.decoded.email;
+        //     const query = {email: decodedEmail};
+        //     const user = await sellersCollection.findOne(query);
+        //     if (user?.role !== 'admin') {
+        //         return res.status(403).send({ message: 'forbidden access' })
+        //     }
+        //     next()
+        // }
 
 
         app.get('/jwt', async (req, res) => {//jokhn user reg thakbe tokhn jwt pabo
@@ -85,27 +85,40 @@ async function run() {
             const result= await productsCollection.insertOne(addproduct);
             res.send(result);
         })
-//nirdisto seller email er jnno product paoa jabe
-        app.get('/addproducts',verifyJWT, async(req,res)=>{
-            const email =req.query.email;
-           
-            // console.log('token',req.headers.authorization)
-            const decodedEmail = req.decoded.email;
 
-            if(email !== decodedEmail){
-                return res.status(403).send({ message: 'forbidden access' })
-            }
-            const query= { selleremail:email };
-           
-            const result=await productsCollection.find(query).toArray();
-            res.send(result);
-        });
         app.delete('/addproducts/:id',async(req,res)=>{
             const id= req.params.id;
             const query={_id:ObjectId(id)};
             const result=await productsCollection.deleteOne(query);
             res.send(result);
         })
+
+      
+        app.delete('/deletebookingproduct/:id',async(req,res)=>{
+            const id= req.params.id;
+            const query={_id:ObjectId(id)};
+            const result=await productsCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        app.post('/repotedproduct/:id',async(req,res)=>{
+            const repotedproduct=req.body;
+           
+            const result= await repotedproductCollection.insertOne(repotedproduct);
+            res.send(result);
+        })
+        app.get('/repotedproduct',async(req,res)=>{
+            const query={};
+            const result=await repotedproductCollection.find(query).toArray();
+            res.send(result);
+        });
+        app.delete('/repotedproduct/:id',async(req,res)=>{
+            const id= req.params.id;
+            const query= {_id:id};
+            const result = await repotedproductCollection.deleteOne(query);
+            console.log(result)
+            res.send(result)
+        });
       
 //advitice
         app.post('/advitiseproduct/:id',async(req,res)=>{
@@ -173,10 +186,21 @@ async function run() {
        
      
         //get buyer info ,BuyerEmail:1,Image:1,Location:1,BookingDate:1,product:1
-        app.get('/buyersinfo',async(req,res)=>{
-            const query= {};
-            const result=await bookingCollection.find(query).project({Buyer:1,BuyerEmail:1,BookingDate:1,product:1,Location:1,BuyerPhone:1,Image:1}).toArray();
+        app.get('/buyersinfo',verifyJWT,async(req,res)=>{
+            const email =req.query.email;
+           
+            const decodedEmail = req.decoded.email;
+        
+            if(email !== decodedEmail){
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            const query= { SellersEmail:email };
+           
+            const result=await bookingCollection.find(query).toArray();
             res.send(result);
+            // const query= {};
+            // const result=await bookingCollection.find(query).project({Buyer:1,BuyerEmail:1,BookingDate:1,product:1,Location:1,BuyerPhone:1,Image:1}).toArray();
+            // res.send(result);
         });
         app.get('/myordersbookings/:id',async(req,res)=>{
             const id = req.params.id;
@@ -297,7 +321,7 @@ app.get('/buyer/buyer/:email', async (req, res) => {
     const buyer = await buyersCollection.findOne(query);
     res.send({ isBuyer: buyer?.roles === 'buyer' });
 })
-// working 4.32PM now...........
+// original
 app.get('/myordersbookings',verifyJWT,async(req,res)=>{
    
     const email =req.query.email;
@@ -312,8 +336,55 @@ app.get('/myordersbookings',verifyJWT,async(req,res)=>{
     const result=await bookingCollection.find(query).toArray();
     res.send(result);
    
+ });
+// Original : nirdisto seller email er jnno product paoa jabe
+app.get('/addproducts',verifyJWT, async(req,res)=>{
+    const email =req.query.email;
+    const decodedEmail = req.decoded.email;
+
+    if(email !== decodedEmail){
+        return res.status(403).send({ message: 'forbidden access' })
+    }
+    const query= { selleremail:email };
+    const result=await productsCollection.find(query).toArray();
+    res.send(result);
 });
 
+// fake booking
+app.get('/myordersbook/:id',async(req,res)=>{
+ const id = req.params.id;
+  const query ={productId:id}
+    const buyer=await bookingCollection.findOne(query);
+    res.send( buyer?.paid ===true);
+})
+// app.get('/myordersbook/:id',async(req,res)=>{
+//     const id = req.params.id;
+//      const query ={productId:id}
+//        const buyer=await bookingCollection.findOne(query);
+//        res.send( buyer?.paid ===true);
+//    })
+
+//fake myproduct
+// app.get('/addpro', async(req,res)=>{
+//     const id = req.params.id;
+//     const query={};
+//     const result=await productsCollection.find(query).toArray();
+
+//     const booking = {productId:id};
+//     const alreadybooked = await bookingCollection.find(booking).toArray();
+//     if (alreadybooked?.paid === true) {
+//         const bookingfind= await bookingCollection.find(booking).toArray();
+//         result.forEach(option=>{
+//             const bookingOption = bookingfind.filter(prod.productId===option.productid);
+//             const remaining = option.filter(opt._id !== bookingOption)
+//             option=remaining;
+//         })
+            
+//     }
+//     // const query = {productid:id};
+//     // const result=await productsCollection.find(query).toArray();
+//     res.send(result);
+// });
         //payment 
        app.post('/create-payment-intent',async (req,res)=>{
          const productBooking =req.body;
@@ -335,6 +406,20 @@ app.get('/myordersbookings',verifyJWT,async(req,res)=>{
           });
         
        })
+       app.post('/payments', async (req, res) =>{
+        const payment = req.body;
+        const result = await paymentCollection.insertOne(payment);
+        const id = payment.bookingId
+        const filter = {_id: ObjectId(id)}
+        const updatedDoc = {
+            $set: {
+                paid: true,
+                transactionId: payment.transactionId
+            }
+        }
+        const updatedResult = await bookingCollection.updateOne(filter, updatedDoc)
+        res.send(result);
+      })
        
     }
     finally {
